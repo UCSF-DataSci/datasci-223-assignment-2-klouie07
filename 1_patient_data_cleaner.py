@@ -53,6 +53,8 @@ def load_patient_data(filepath):
     """
     with open(filepath, 'r') as file:
         return json.load(file)
+    
+    return []
 
 def clean_patient_data(data: dict) -> dict:
     """
@@ -73,7 +75,33 @@ def clean_patient_data(data: dict) -> dict:
     
     # BUG: Add your bug description here
     # FIX: Add your fix description here
-    
+    print(data)
+
+    for patient in data:
+        # make sure name is a string
+        patient["name"] = str(patient["name"])
+        # capitalize each word
+        patient["name"] = patient["name"].title()
+
+    # 2. Ages: Convert to integers, set invalid ages to 0
+    for patient in data:
+        # make sure age is a string
+        patient["age"] = str(patient["age"])
+        # convert to integer
+        patient["age"] = int(patient["age"])
+        # set blank or NA to 0
+        if patient["age"] == "" or patient["age"] == "NA":
+            patient["age"] = 0
+        if patient["age"] < 18:
+            data.remove(patient)
+
+    # 3. make sure diagnosis is a string
+    for patient in data:
+        patient["diagnosis"] = str(patient["diagnosis"])
+
+    # 4. Remove any duplicate records
+    data = list(set(data))
+
     return data
 
 def main():
