@@ -19,6 +19,8 @@ def analyze_patient_cohorts(input_file: str) -> pl.DataFrame:
     
     # Create a lazy query to analyze cohorts
     cohort_results = pl.scan_parquet("patients_large.parquet").pipe(
+        lambda df: df.filter(pl.col("BMI").is_not_null())
+    ).pipe(
         lambda df: df.filter((pl.col("BMI") >= 10) & (pl.col("BMI") <= 60))
     ).pipe(
         lambda df: df.select(["BMI", "Glucose", "Age"])
@@ -31,17 +33,19 @@ def analyze_patient_cohorts(input_file: str) -> pl.DataFrame:
             ).alias("bmi_range")
         )
     ).pipe(
-        lambda df: df.groupby("bmi_range").agg([
+        lambda df: df.group_by("bmi_range").agg([
             pl.col("Glucose").mean().alias("avg_glucose"),
             pl.count().alias("patient_count"),
             pl.col("Age").mean().alias("avg_age")
         ])
-    ).collect(streaming=True)
+    ).pipe(lambda df: df.sort("bmi_range") # added to sort BMI for visuals
+    ).collect() # remove streaming=True bc of an error
     
     return cohort_results
 
 def main():
     # Input file
+
     input_file = "patients_large.csv"
     
     # Run analysis
